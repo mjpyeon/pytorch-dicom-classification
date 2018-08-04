@@ -64,7 +64,7 @@ class Rescale:
         self.output_size = output_size
 
     def __call__(self, sample):
-        rescaled = resize(sample[0], self.output_size)
+        rescaled = resize(sample[0], self.output_size, mode='constant')
         return (rescaled, sample[1])
 
 class ToTensor:
@@ -81,6 +81,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     since = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
+
+    history = {'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -127,12 +129,12 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
-
+            history["%s_loss"%(phase)].append(epoch_loss)
+            history["%s_acc"%(phase)].append(epoch_acc)
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-
         print()
 
     time_elapsed = time.time() - since
@@ -142,10 +144,21 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    return model
+    return model, history
+
+def save_history(fname, history):
+    nb_epochs = len(history['train_loss'])
+    with open(fname, 'w+') as f:
+        f.write('epoch train_loss train_acc val_loss val_acc\n')
+        for i in range(nb_epochs):
+            f.write('%d %.4f %.4f %.4f %.4f\n'%(i, history['train_loss'][i],
+                                                history['train_acc'][i],
+                                                history['val_loss'][i],
+                                                history['val_acc'][i]))
 
 
-def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25):
+
+def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25, batch_size=32):
     """
     k: "k"-fold
     src: k src lists
@@ -155,6 +168,7 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
     train the network
     save the model
     """
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     for curr_fold in range(k):
         train_src = []
         for i in range(k):
@@ -167,17 +181,18 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
         test_dataset = EarDataset(binary_dir=test_src,
                                   alloc_label = alloc_label,
                                          transforms=transforms.Compose([Rescale((256, 256)), ToTensor()]))
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
         dataset_sizes = {'train':len(train_dataset), 'val':len(test_dataset)}
-        network = models.resnet18(pretrained=True).cuda()
+        network = models.resnet18(pretrained=True).to(device)
         #num_ftrs = network.fc.in_features
         #network.fc = nn.Linear(num_ftrs, num_labels).cuda()
-        network.fc = nn.Linear(2048, num_labels).cuda()
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        network.fc = nn.Linear(2048, num_labels).to(device)
         class_names = train_dataset.class_names
-        criterion = torch.nn.CrossEntropyLoss()
+        criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
-        trained_model = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
-        torch.save(trained_model, "densenet161_%d-fold"%(curr_fold))
+        trained_model, curr_history = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
+        save_history("%dth_fold.csv"%(curr_fold), curr_history)
+        torch.save(trained_model, "resnet161_%dth-fold.pt"%(curr_fold))
+

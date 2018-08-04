@@ -12,6 +12,8 @@ def main():
     parser.add_argument('--beta_2', default=0.999, type=float, help="second beta value")
     parser.add_argument('--weight_decay', default=.0, type=float, help="weight decay")
     parser.add_argument('--nb_epochs', default=25, type=int, help="# of epochs")
+    parser.add_argument('--batch_size', default=32, type=int, help="batch size")
+
     parser = parser.parse_args()
 
     num_labels = parser.num_labels
@@ -21,10 +23,11 @@ def main():
     betas = (parser.beta_1, parser.beta_2)
     weight_decay = parser.weight_decay
     nb_epochs = parser.nb_epochs
+    batch_size = parser.batch_size
     if num_labels == 2:
-        train(k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs)
+        train(k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
     else:
-        train(k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs)
+        train(k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
 
 if __name__ == "__main__":
     main()
