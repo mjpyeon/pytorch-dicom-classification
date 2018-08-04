@@ -13,12 +13,10 @@ scikit-image 0.13.1
 ```
 <br>
 
-### Datasets
-[same with here]
-<br>
 
 ### Usage
 CAUTION: You must define your own labeling function in model.py
+<br>
 preprocess dataset
 ```
 python preprocessing.py /path/to/src/dir/ /path/to/dest/dir/
