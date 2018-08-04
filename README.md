@@ -15,22 +15,22 @@ scikit-image 0.13.1
 
 
 ### Usage
-CAUTION: You must define your own labeling function in model.py
+##### CAUTION: You must define your own labeling function in model.py
 <br>
-preprocess dataset
-<br>
+
+#### preprocess dataset
 ```
 python preprocessing.py /path/to/src/dir/ /path/to/dest/dir/
 ```
 <br>
-split dataset for k-fold validation
-<br>
+
+#### split dataset for k-fold validation
 ```
 python split.py /path/to/src/dir/ k
 ```
 <br>
-train dataset
-<br>
+
+#### train dataset
 ```
 python main.py --src /path/to/src/dir/
 ```
