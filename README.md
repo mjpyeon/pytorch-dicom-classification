@@ -15,7 +15,7 @@ scikit-image 0.13.1
 
 
 ### Usage
-#### CAUTION: You must define your own labeling function in model.py
+CAUTION: You must define your own labeling function in model.py
 <br>
 preprocess dataset
 <br>
