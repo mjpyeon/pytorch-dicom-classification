@@ -144,7 +144,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    return model, history
+    return model, history, best_acc
 
 def save_history(fname, history):
     nb_epochs = len(history['train_loss'])
@@ -158,7 +158,7 @@ def save_history(fname, history):
 
 
 
-def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25, batch_size=32):
+def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25, batch_size=32, start_fold=0, end_fold=None):
     """
     k: "k"-fold
     src: k src lists
@@ -168,8 +168,8 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
     train the network
     save the model
     """
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    for curr_fold in range(k):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    for curr_fold in range(start_fold, end_fold):
         train_src = []
         for i in range(k):
             if i != curr_fold:
@@ -185,14 +185,14 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
         dataset_sizes = {'train':len(train_dataset), 'val':len(test_dataset)}
-        network = models.resnet18(pretrained=True).to(device)
+        network = models.resnet152(pretrained=True).to(device)
         #num_ftrs = network.fc.in_features
         #network.fc = nn.Linear(num_ftrs, num_labels).cuda()
-        network.fc = nn.Linear(2048, num_labels).to(device)
+        network.fc = nn.Linear(8192, num_labels).to(device)
         class_names = train_dataset.class_names
         criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
-        trained_model, curr_history = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
-        save_history("%dth_fold.csv"%(curr_fold), curr_history)
-        torch.save(trained_model, "resnet161_%dth-fold.pt"%(curr_fold))
+        trained_model, curr_history, curr_best = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
+        save_history("resnet152_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
+        torch.save(trained_model, "%.4facc_resnet152_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(curr_best, curr_fold, lr, betas[0], betas[1]))
 

@@ -13,6 +13,8 @@ def main():
     parser.add_argument('--weight_decay', default=.0, type=float, help="weight decay")
     parser.add_argument('--nb_epochs', default=25, type=int, help="# of epochs")
     parser.add_argument('--batch_size', default=32, type=int, help="batch size")
+    parser.add_argument('--start_fold', default=0, type=int, help="start fold")
+    parser.add_argument('--end_fold', default=0, type=int, help="end fold, if it is 0, it will be interpreted as using full k fold")
 
     parser = parser.parse_args()
 
@@ -24,10 +26,14 @@ def main():
     weight_decay = parser.weight_decay
     nb_epochs = parser.nb_epochs
     batch_size = parser.batch_size
+    start_fold = parser.start_fold
+    end_fold = parser.end_fold
+    if end_fold == 0:
+        end_fold = k
     if num_labels == 2:
-        train(k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
+        train(k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size, start_fold, end_fold)
     else:
-        train(k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
+        train(k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size, start_fold, end_fold)
 
 if __name__ == "__main__":
     main()
