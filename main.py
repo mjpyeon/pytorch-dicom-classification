@@ -4,7 +4,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description="densenet for dicom datasets")
 
-    parser.add_argument('--architecture', default='resnet152', type=string, help='a NN architecture supported by torchvision e.g. resnet152')
+    parser.add_argument('--architecture', default='resnet152', type=str, help='a NN architecture supported by torchvision e.g. resnet152')
     parser.add_argument('--output_dim', default=8192, type=int, help='the final hidden layer\'s dim')
     parser.add_argument('--num_labels', default=2, type=int, help="# of labels")
     parser.add_argument('--k', default=5, type=int, help="\'k\'-fold")

@@ -2,6 +2,7 @@ import numpy as np
 import os
 import glob
 import torch
+import torchvision
 import torchvision.models as models
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
@@ -185,7 +186,13 @@ def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, 
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
         dataset_sizes = {'train':len(train_dataset), 'val':len(test_dataset)}
-        exec("network = models.%s(pretrained=True).to(device)"%(architecture))
+        model_name = "resnet18"
+        network = models.resnet18(pretrained=True).to(device)
+        _global =  {"network":network, "models":models, "device":device, "model_name":model_name}
+        exec("network = models.%s(pretrained=True).to(device)\nmodel_name=\'%s\'"%(architecture, architecture),_global)
+        network = _global['network']
+        model_name = _global['model_name']
+        print(model_name,"is successfully loaded")
         #num_ftrs = network.fc.in_features
         #network.fc = nn.Linear(num_ftrs, num_labels).cuda()
         network.fc = nn.Linear(output_dim, num_labels).to(device)
@@ -193,6 +200,6 @@ def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, 
         criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
         trained_model, curr_history, curr_best = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
-        save_history("resnet50_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
-        torch.save(trained_model, "%.4facc_resnet50_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(curr_best, curr_fold, lr, betas[0], betas[1]))
+        save_history("%s_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(architecture, curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
+        torch.save(trained_model, "%.4facc_%s_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(architecture, curr_best, curr_fold, lr, betas[0], betas[1]))
 
