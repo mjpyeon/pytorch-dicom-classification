@@ -185,7 +185,7 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
         dataset_sizes = {'train':len(train_dataset), 'val':len(test_dataset)}
-        network = models.resnet152(pretrained=True).to(device)
+        network = models.resnet50(pretrained=True).to(device)
         #num_ftrs = network.fc.in_features
         #network.fc = nn.Linear(num_ftrs, num_labels).cuda()
         network.fc = nn.Linear(8192, num_labels).to(device)
@@ -193,6 +193,6 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
         criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
         trained_model, curr_history, curr_best = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
-        save_history("resnet152_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
-        torch.save(trained_model, "%.4facc_resnet152_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(curr_best, curr_fold, lr, betas[0], betas[1]))
+        save_history("resnet50_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
+        torch.save(trained_model, "%.4facc_resnet50_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(curr_best, curr_fold, lr, betas[0], betas[1]))
 
