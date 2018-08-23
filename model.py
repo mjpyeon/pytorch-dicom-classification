@@ -158,7 +158,7 @@ def save_history(fname, history):
 
 
 
-def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25, batch_size=32, start_fold=0, end_fold=None):
+def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight_decay=0, nb_epochs=25, batch_size=32, start_fold=0, end_fold=None):
     """
     k: "k"-fold
     src: k src lists
@@ -185,10 +185,10 @@ def train(k, src, alloc_label, num_labels=2, lr=1e-3, betas=(0.9, 0.999), weight
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
         dataset_sizes = {'train':len(train_dataset), 'val':len(test_dataset)}
-        network = models.resnet50(pretrained=True).to(device)
+        exec("network = models.%s(pretrained=True).to(device)"%(architecture))
         #num_ftrs = network.fc.in_features
         #network.fc = nn.Linear(num_ftrs, num_labels).cuda()
-        network.fc = nn.Linear(8192, num_labels).to(device)
+        network.fc = nn.Linear(output_dim, num_labels).to(device)
         class_names = train_dataset.class_names
         criterion = torch.nn.CrossEntropyLoss().to(device)
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
