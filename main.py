@@ -4,6 +4,8 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description="densenet for dicom datasets")
 
+    parser.add_argument('--architecture', default='resnet152', type=string, help="neural network architecture e.g. resnet152")
+    parser.add_argument('--output_dim', default=8092, type=int, help="original dim of output layer of the architecture")
     parser.add_argument('--num_labels', default=2, type=int, help="# of labels")
     parser.add_argument('--k', default=5, type=int, help="\'k\'-fold")
     parser.add_argument('--src', type=str, help="all directories must be src-0, src-1, ..., src-k")
@@ -16,6 +18,8 @@ def main():
 
     parser = parser.parse_args()
 
+    architecture = parser.architecture
+    output_dim = parser.output_dim
     num_labels = parser.num_labels
     k = parser.k
     src = [ parser.src + "-%d"%(i) for i in range(k) ]
@@ -25,9 +29,9 @@ def main():
     nb_epochs = parser.nb_epochs
     batch_size = parser.batch_size
     if num_labels == 2:
-        train(k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
+        train(architecture, output_dim, k, src, binary_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
     else:
-        train(k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
+        train(architecture, output_dim, k, src, multi_label, num_labels, lr, betas, weight_decay, nb_epochs, batch_size)
 
 if __name__ == "__main__":
     main()
