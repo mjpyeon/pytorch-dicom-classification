@@ -26,6 +26,20 @@ def binary_label(fnames):
             labeled.append(1)
     return np.array(labeled), ["Normal", "Abnormal"]
 
+def extract_label(fname):
+    return fname.split('__')[-1].split('.')[-3]
+
+def multi_label(fnames):
+    labeled = []
+    with open('./labels.csv', 'r') as f:
+        label_table = f.readlines()
+    label_table = [s.replace('\n', '') for s in label_table]
+    label_dict = {l:i for i, l in enumerate(label_table)}
+
+    for f in fnames:
+        labeled.append(label_dict[extract_label(f)])
+    return np.array(labeled), label_table
+
 class EarDataset(Dataset):
     def __init__(self, binary_dir, alloc_label, transforms=None):
         """
@@ -76,6 +90,13 @@ class ToTensor:
         # torch image: C X H X W
         image = image.transpose((2, 0, 1))
         return (torch.FloatTensor(image), label)
+class Normalize:
+    def __call__(self, sample):
+        image, label = sample
+        image[:, 0] = (image[:, 0]-0.485)/0.229
+        image[:, 1] = (image[:, 1]-0.456)/0.224
+        image[:, 2] = (image[:, 2]-0.406)/0.225
+        return (image, label)
 
 
 def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_sizes, class_names, device, num_epochs=25):
@@ -178,10 +199,10 @@ def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, 
         test_src = src[curr_fold]
         train_dataset = EarDataset(binary_dir=train_src,
                                          alloc_label=alloc_label,
-                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor()]))
+                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor(), Normalize()]))
         test_dataset = EarDataset(binary_dir=test_src,
                                   alloc_label = alloc_label,
-                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor()]))
+                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor(), Normalize()]))
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
@@ -201,5 +222,5 @@ def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, 
         optimizer = torch.optim.Adam(network.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
         trained_model, curr_history, curr_best = train_model(network, criterion, optimizer, None, dataloaders, dataset_sizes, class_names, device, num_epochs=nb_epochs)
         save_history("%s_%.4facc_%dth_fold_lr-%.5f_beta1-%.2f_beta2-%.3f.csv"%(architecture, curr_best, curr_fold, lr, betas[0], betas[1]), curr_history)
-        torch.save(trained_model, "%.4facc_%s_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(architecture, curr_best, curr_fold, lr, betas[0], betas[1]))
+        torch.save(trained_model, "%s_%.4facc_%dth-fold_lr-%.5f_beta1-%.2f_beta2-%.3f.pt"%(architecture, curr_best, curr_fold, lr, betas[0], betas[1]))
 

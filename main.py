@@ -2,7 +2,7 @@ from model import *
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(description="densenet for dicom datasets")
+    parser = argparse.ArgumentParser(description="neural network framework for dicom datasets")
 
     parser.add_argument('--architecture', default='resnet152', type=str, help='a NN architecture supported by torchvision e.g. resnet152')
     parser.add_argument('--output_dim', default=8192, type=int, help='the final hidden layer\'s dim')
