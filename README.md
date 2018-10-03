@@ -32,6 +32,6 @@ python split.py /path/to/src/dir/ k
 
 #### train dataset
 ```
-python main.py --src /path/to/src/dir/
+python main.py --architecture resnet152 --output_dim 8192 --num_labels 17 --k 5 --src /path/to/src/dir/
 ```
 <br>
