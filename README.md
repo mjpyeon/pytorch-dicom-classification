@@ -35,3 +35,9 @@ python split.py /path/to/src/dir/ k
 python main.py --architecture resnet152 --output_dim 8192 --num_labels 17 --k 5 --src /path/to/src/dir/
 ```
 <br>
+
+#### evaluation
+```
+python eval.py --ckpt /path/to/checkpoint/ --data_dir /path/to/src/dir/ --multilabel True --batch_size 64 --labels labels.csv
+```
+<br>
