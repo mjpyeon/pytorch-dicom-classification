@@ -134,6 +134,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
+                    if isinstance(outputs, tuple):
+                        outputs = outputs[0]
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
@@ -197,12 +199,21 @@ def train(architecture, output_dim, k, src, alloc_label, num_labels=2, lr=1e-3, 
             if i != curr_fold:
                 train_src.append(src[i])
         test_src = src[curr_fold]
+        if architecture == "inception_v3":
+            shape = (299, 299)
+            output_dim = 2048
+        else:
+            shape = (256, 256)
+        if architecture == 'resnet50' or architecture == 'resnet101' or architecture == 'resnet152':
+            output_dim = 8192
+        elif architecture == 'resnet18' or architecture == 'resnet34':
+            output_dim = 2048
         train_dataset = EarDataset(binary_dir=train_src,
                                          alloc_label=alloc_label,
-                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor(), Normalize()]))
+                                         transforms=transforms.Compose([Rescale(shape), ToTensor(), Normalize()]))
         test_dataset = EarDataset(binary_dir=test_src,
                                   alloc_label = alloc_label,
-                                         transforms=transforms.Compose([Rescale((256, 256)), ToTensor(), Normalize()]))
+                                         transforms=transforms.Compose([Rescale(shape), ToTensor(), Normalize()]))
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         dataloaders = {'train':train_loader, 'val':test_loader}
